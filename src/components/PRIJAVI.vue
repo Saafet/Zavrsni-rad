@@ -20,6 +20,41 @@
       </form>
     </div>
 
+    <!-- Kreiranje testa (samo za profesore i admina) -->
+    <div v-if="userRole === 'professor' || userRole === 'admin'" class="mb-5 border rounded p-3 bg-light">
+      <h3>Kreiraj test</h3>
+      <form @submit.prevent="kreirajTest" class="row g-2">
+        <div class="col-12 mb-2">
+          <input
+            v-model="noviTest.naziv"
+            type="text"
+            class="form-control"
+            placeholder="Naziv testa"
+            required
+          />
+        </div>
+
+        <div class="col-12">
+          <p><strong>Odaberite pitanja:</strong></p>
+          <div v-for="pitanje in svaPitanja" :key="pitanje.id" class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :value="pitanje.id"
+              v-model="noviTest.odabranaPitanja"
+            />
+            <label class="form-check-label">
+              {{ pitanje.naziv }}
+            </label>
+          </div>
+        </div>
+
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-primary">Spremi test</button>
+        </div>
+      </form>
+    </div>
+
     <!-- Lista svih pitanja -->
     <div class="mb-5">
       <h3>Kreirana pitanja</h3>
@@ -83,6 +118,7 @@ export default {
       novoPitanje: "",
       svaPitanja: [],
       urediPitanje: {},
+      noviTest: { naziv: "", odabranaPitanja: [] } // Dodano za kreiranje testa
     };
   },
   methods: {
@@ -110,6 +146,7 @@ export default {
         console.error(e);
       }
     },
+
     async ucitajPitanja() {
       try {
         const res = await fetch(`${this.apiUrl}/dohvati-pitanja.php`);
@@ -124,6 +161,33 @@ export default {
       }
     },
 
+    async kreirajTest() {
+      if (!this.noviTest.naziv.trim()) {
+        alert("Unesite naziv testa.");
+        return;
+      }
+      if (this.noviTest.odabranaPitanja.length === 0) {
+        alert("Odaberite barem jedno pitanje.");
+        return;
+      }
+      try {
+        const res = await fetch(`${this.apiUrl}/kreiraj-test.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.noviTest),
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert("Test uspješno kreiran!");
+          this.noviTest = { naziv: "", odabranaPitanja: [] };
+        } else {
+          alert(json.message || "Greška pri kreiranju testa.");
+        }
+      } catch (e) {
+        console.error("Greška pri kreiranju testa:", e);
+        alert("Greška pri kreiranju testa.");
+      }
+    },
 
     pokreniUrediPitanje(pitanje) {
       this.urediPitanje = { ...pitanje };
@@ -139,7 +203,6 @@ export default {
         if (json.success) {
           alert("Pitanje uspješno uređeno.");
           await this.ucitajPitanja();
-          
           this.urediPitanje = {};
         } else {
           alert(json.message || "Greška pri uređivanju.");

@@ -19,11 +19,7 @@
                 <a class="nav-link" href="#prijavi">KREIRANA PITANJA</a>
               </li>
               <li class="nav-item"><a class="nav-link" href="#kontakt">KONTAKT</a></li>
-
-
             </ul>
-
-            
             <ul class="navbar-nav">
               <li class="nav-item">
                 <button class="nav-link btn btn-link p-0" @click="logout" style="border: none; background: none;">Logout</button>
@@ -68,6 +64,16 @@
 
     <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
   <RokoviPrijave :userRole="userRole" />
+</section>
+
+
+    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+  <TestRjesavanje :userRole="userRole" />
+</section>
+
+
+    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+  <PregledRezultata :userRole="userRole" />
 </section>
 
 
@@ -184,10 +190,12 @@
 import PRIJAVI from './PRIJAVI.vue'
 import LoginForm from './LoginForm.vue'
 import RokoviPrijave from './RokoviPrijave.vue'
+import TestRjesavanje from './TestRjesavanje.vue'
+import PregledRezultata from './PregledRezultata.vue'
 
 export default {
   name: 'App',
-  components: { PRIJAVI, LoginForm, RokoviPrijave },
+  components: { PRIJAVI, LoginForm, RokoviPrijave, TestRjesavanje, PregledRezultata },
 
   data() {
     return {
