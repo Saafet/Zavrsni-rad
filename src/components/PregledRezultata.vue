@@ -1,6 +1,7 @@
 <template>
   <div class="container my-5">
     <h3>Pregled rezultata testova</h3>
+
     <div v-if="!odabraniTest">
       <ul class="list-group">
         <li
@@ -56,7 +57,7 @@
           </tr>
         </tbody>
       </table>
-      <button class="btn btn-secondary mt-2" @click="odabraniTest = null">Nazad</button>
+      <button class="btn btn-secondary mt-2" @click="zatvoriRezultate">Nazad</button>
     </div>
   </div>
 </template>
@@ -68,7 +69,9 @@ export default {
       apiUrl: "http://localhost/my_project",
       testovi: [],
       odabraniTest: null,
-      rezultati: []
+      rezultati: [],
+      testIntervalId: null,
+      rezultatiIntervalId: null
     };
   },
   methods: {
@@ -83,6 +86,13 @@ export default {
     },
     async ucitajRezultate(testId) {
       this.odabraniTest = testId;
+      await this.loadRezultati(testId);
+      if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
+      this.rezultatiIntervalId = setInterval(() => {
+        this.loadRezultati(testId);
+      }, 10000);
+    },
+    async loadRezultati(testId) {
       try {
         const res = await fetch(`${this.apiUrl}/get-rezultati.php?test_id=${testId}`);
         const json = await res.json();
@@ -104,12 +114,24 @@ export default {
         console.error(e);
       }
     },
+    zatvoriRezultate() {
+      this.odabraniTest = null;
+      if (this.rezultatiIntervalId) {
+        clearInterval(this.rezultatiIntervalId);
+        this.rezultatiIntervalId = null;
+      }
+    },
     formatDatum(d) {
       return new Date(d).toLocaleString();
     }
   },
   mounted() {
     this.ucitajTestove();
+    this.testIntervalId = setInterval(this.ucitajTestove, 5000);
+  },
+  beforeUnmount() {
+    if (this.testIntervalId) clearInterval(this.testIntervalId);
+    if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
   }
 };
 </script>
