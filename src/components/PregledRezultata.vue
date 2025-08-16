@@ -57,12 +57,24 @@
           </tr>
         </tbody>
       </table>
+
+      <div class="summary mt-2">
+        <p><strong>Ukupno učenika:</strong> {{ totalUcenika }}</p>
+        <p><strong>Prosjek ocjena:</strong> {{ prosjekOcjena }}</p>
+        <p><strong>Najčešća ocjena:</strong> {{ najcescaOcjena }}</p>
+      </div>
+      <div class="mt-2 chart-container">
+        <canvas id="analizaChart"></canvas>
+      </div>
+
       <button class="btn btn-secondary mt-2" @click="zatvoriRezultate">Nazad</button>
     </div>
   </div>
 </template>
 
 <script>
+import { Chart } from "chart.js/auto";
+
 export default {
   data() {
     return {
@@ -71,7 +83,18 @@ export default {
       odabraniTest: null,
       rezultati: [],
       testIntervalId: null,
-      rezultatiIntervalId: null
+      rezultatiIntervalId: null,
+      chart: null,
+      prosjekOcjena: 0,
+      totalUcenika: 0,
+      najcescaOcjena: 0,
+      ocjeneBoje: [
+        "rgba(255, 99, 132, 0.7)",   // 1
+        "rgba(255, 159, 64, 0.7)",   // 2
+        "rgba(255, 205, 86, 0.7)",   // 3
+        "rgba(75, 192, 192, 0.7)",   // 4
+        "rgba(54, 162, 235, 0.7)"    // 5
+      ]
     };
   },
   methods: {
@@ -89,14 +112,21 @@ export default {
       await this.loadRezultati(testId);
       if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
       this.rezultatiIntervalId = setInterval(() => {
-        this.loadRezultati(testId);
+        this.loadRezultati(testId, true); 
       }, 10000);
     },
-    async loadRezultati(testId) {
+    async loadRezultati(testId, update=false) {
       try {
         const res = await fetch(`${this.apiUrl}/get-rezultati.php?test_id=${testId}`);
         const json = await res.json();
-        if (json.success) this.rezultati = json.rezultati;
+        if (json.success) {
+          this.rezultati = json.rezultati;
+          if(update && this.chart){
+            this.updateGrafikon();
+          } else {
+            this.napraviGrafikon();
+          }
+        }
       } catch (e) {
         console.error(e);
       }
@@ -120,9 +150,96 @@ export default {
         clearInterval(this.rezultatiIntervalId);
         this.rezultatiIntervalId = null;
       }
+      if (this.chart) this.chart.destroy();
+      this.prosjekOcjena = 0;
+      this.totalUcenika = 0;
+      this.najcescaOcjena = 0;
     },
     formatDatum(d) {
       return new Date(d).toLocaleString();
+    },
+    napraviGrafikon() {
+      if (!this.rezultati.length) return;
+
+      this.izracunajStatistiku();
+
+      const ctx = document.getElementById("analizaChart").getContext("2d");
+      this.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ["1","2","3","4","5"],
+          datasets: [
+            {
+              label: "Broj učenika",
+              data: this.raspodjelaOcjena,
+              backgroundColor: this.ocjeneBoje
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: `Broj učenika po ocjeni`,
+              font: { size: 14 }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const idx = context.dataIndex;
+                  const value = context.dataset.data[idx];
+                  const postotak = ((value/this.totalUcenika)*100).toFixed(1);
+                  return `${value} učenika (${postotak}%)`;
+                }
+              }
+            },
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Učenici' },
+              ticks: { stepSize: 1 }
+            },
+            x: {
+              title: { display: true, text: "Ocjena" }
+            }
+          }
+        }
+      });
+    },
+
+    updateGrafikon() {
+      if (!this.chart) return;
+      this.izracunajStatistiku();
+      this.chart.data.datasets[0].data = this.raspodjelaOcjena;
+      this.chart.update();
+    },
+
+    izracunajStatistiku() {
+      const ocjene = this.rezultati
+        .map(r => parseFloat(r.ocjena))
+        .filter(o => !isNaN(o) && o > 0);
+
+      if (!ocjene.length) return;
+
+      this.totalUcenika = ocjene.length;
+      const prosjek = ocjene.reduce((a,b)=>a+b,0)/ocjene.length;
+      this.prosjekOcjena = prosjek.toFixed(2);
+
+
+      const rasp = {1:0,2:0,3:0,4:0,5:0};
+      ocjene.forEach(o=>{
+        const zaok = Math.round(o);
+        if(rasp[zaok]!==undefined) rasp[zaok]++;
+      });
+      this.raspodjelaOcjena = Object.values(rasp);
+
+
+      const najcesca = Object.entries(rasp).reduce((a,b)=> b[1] > a[1]? b : a, [0,0])[0];
+      this.najcescaOcjena = najcesca;
     }
   },
   mounted() {
@@ -132,6 +249,20 @@ export default {
   beforeUnmount() {
     if (this.testIntervalId) clearInterval(this.testIntervalId);
     if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
+    if (this.chart) this.chart.destroy();
   }
 };
 </script>
+
+<style scoped>
+.chart-container {
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+  margin: auto;
+}
+
+.summary p {
+  margin: 2px 0;
+}
+</style>

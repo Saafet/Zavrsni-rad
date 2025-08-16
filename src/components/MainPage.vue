@@ -36,26 +36,27 @@
 
     <br><br>
 
-    <section class=" uvodni-tekst mt-5 pt-5 py-5 bg-light rounded shadow">
+    <section class="uvodni-tekst container container-custom mt-5 pt-5 py-5 bg-light rounded shadow">
       <div class="row align-items-center">
         
-        <div class="col-md-6 px-4 text-dark">
-          <h2 class="mb-4 fw-bold text-primary">Dobrodošli na online test!</h2>
+        <div class="col-md-6 px-5 text-dark">
+          <h2 class="mb-3 fw-bold text-primary">Dobrodošli na online test!</h2>
           <p class="lead">
-            <strong> Dobrodošli na Online Test Platformu za Studente</strong><br></br>
+            <strong> Dobrodošli na Online Test Platformu za Studente</strong><br><br>
             Naša platforma omogućava jednostavno i interaktivno rješavanje testova direktno putem interneta.
             Bez obzira da li učite od kuće, iz studentskog doma ili biblioteke — sve što vam je potrebno je uređaj s internetom i vaš studentski nalog.
           </p>
           <a href="#prijavi" class="btn btn-primary btn-lg mt-3">🚀 Započni sada</a>
         </div>
 
-        
         <div class="col-md-6 text-center">
           <img src="/fotografije/tehnologije.png" alt="Tehnologije" class="img-fluid rounded shadow-sm"
             style="max-height: 320px;" />
         </div>
+
       </div>
     </section>
+
 
     
     <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
@@ -340,7 +341,7 @@ export default {
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-/* --- Boje i varijable --- */
+
 :root {
   --primary: #1e90ff;
   --primary-dark: #0056b3;
@@ -350,7 +351,7 @@ export default {
   --shadow-soft: 0 6px 20px rgba(0,0,0,0.1);
 }
 
-/* --- Navbar --- */
+
 .navbar {
   background: linear-gradient(90deg, #0d0d0d, #1a1a1a);
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -398,7 +399,7 @@ export default {
   filter: invert(60%) sepia(90%) saturate(500%) hue-rotate(180deg) brightness(90%) contrast(85%);
 }
 
-/* --- Uvodni tekst --- */
+
 .uvodni-tekst {
   font-family: 'Poppins', sans-serif;
   line-height: 1.6;
@@ -421,7 +422,6 @@ export default {
   color: #666666;
 }
 
-/* --- Slike desno --- */
 .images-container {
   position: absolute;
   top: 0;
@@ -442,7 +442,6 @@ export default {
   transform: scale(1.05) rotate(1deg);
 }
 
-/* --- Kartice tehnologija --- */
 .tech-card {
   width: 100%;
   max-width: 300px;
@@ -459,7 +458,7 @@ export default {
   box-shadow: 0 12px 24px rgba(30, 144, 255, 0.3);
 }
 
-/* --- Video wrapper --- */
+
 .video-wrapper {
   background-color: #f4f6fa;
   border: 2px solid #2a5298;
@@ -471,7 +470,7 @@ export default {
   margin-bottom: 2rem;
 }
 
-/* --- Stat box --- */
+
 .stat-box {
   background-color: rgb(199, 237, 241);
   padding: 30px;
@@ -497,14 +496,14 @@ export default {
 }
 
 .gradient-text {
-  background: linear-gradient(45deg,rgb(78, 78, 175),rgb(11, 40, 70));
+  background: linear-gradient(45deg,rgb(78, 78, 175),rgb(101, 160, 223));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
 }
 
-/* --- Footer --- */
+
 .custom-footer {
   background-color: #000;
   font-family: 'Poppins', sans-serif;
@@ -529,7 +528,7 @@ export default {
   text-shadow: 0 0 12px var(--primary);
 }
 
-/* --- Card --- */
+
 .card {
   border: none;
   border-radius: 12px;
@@ -544,7 +543,7 @@ export default {
   box-shadow: 0 12px 24px rgba(30,144,255,0.35);
 }
 
-/* --- Buttons --- */
+
 .btn-danger {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
@@ -561,7 +560,6 @@ export default {
   box-shadow: 0 6px 12px rgba(255,77,77,0.3);
 }
 
-/* --- Poruke --- */
 .poruke-wrapper {
   max-width: 1500px;
   margin: 0 auto;
@@ -584,10 +582,13 @@ export default {
   gap: 1rem;
 }
 
-/* --- Page frame --- */
 .page-frame {
   max-width: 100%;
   padding: 1rem;
   box-sizing: border-box;
+}
+.container-custom {
+  max-width: 1275px;
+  margin: 0 auto;
 }
 </style>
