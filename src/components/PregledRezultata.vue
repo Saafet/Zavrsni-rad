@@ -1,11 +1,17 @@
 <template>
   <div class="container my-5">
+    <div v-if="toast.show" :class="['toast-notification', toast.type]">
+      {{ toast.message }}
+    </div>
     <h3>Pregled rezultata testova</h3>
+    <div v-if="!odabraniTest" class="mb-3">
+      <input v-model="search" placeholder="Pretraži testove..." class="form-control" />
+    </div>
 
     <div v-if="!odabraniTest">
       <ul class="list-group">
         <li
-          v-for="test in testovi"
+          v-for="test in paginiraniTestovi"
           :key="test.id"
           class="list-group-item d-flex justify-content-between align-items-center"
         >
@@ -15,6 +21,27 @@
           </button>
         </li>
       </ul>
+
+      <nav v-if="totalStranica > 1" class="mt-2">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" :class="{ disabled: trenutnaStranica === 1 }">
+            <button class="page-link" @click="prethodnaStranica">Prethodno</button>
+          </li>
+
+          <li
+            v-for="page in totalStranica"
+            :key="page"
+            class="page-item"
+            :class="{ active: page === trenutnaStranica }"
+          >
+            <button class="page-link" @click="trenutnaStranica = page">{{ page }}</button>
+          </li>
+
+          <li class="page-item" :class="{ disabled: trenutnaStranica === totalStranica }">
+            <button class="page-link" @click="sljedecaStranica">Sljedeće</button>
+          </li>
+        </ul>
+      </nav>
     </div>
 
     <div v-else>
@@ -38,15 +65,8 @@
             <td>{{ r.ukupno }}</td>
             <td>{{ r.procenat }}%</td>
             <td>
-              <input
-                type="number"
-                v-model.number="r.ocjena"
-                min="1"
-                max="5"
-                step="0.1"
-                class="form-control"
-                style="width:80px;"
-              >
+              <input type="number" v-model.number="r.ocjena" min="1" max="5" step="0.1"
+                     class="form-control" style="width:80px;">
             </td>
             <td>{{ formatDatum(r.datum) }}</td>
             <td>
@@ -74,6 +94,7 @@
 
 <script>
 import { Chart } from "chart.js/auto";
+import { nextTick, watch } from "vue";
 
 export default {
   data() {
@@ -82,82 +103,133 @@ export default {
       testovi: [],
       odabraniTest: null,
       rezultati: [],
-      testIntervalId: null,
-      rezultatiIntervalId: null,
       chart: null,
       prosjekOcjena: 0,
       totalUcenika: 0,
       najcescaOcjena: 0,
+      toast: { show: false, message: "", type: "success" },
       ocjeneBoje: [
-        "rgba(255, 99, 132, 0.7)",   // 1
-        "rgba(255, 159, 64, 0.7)",   // 2
-        "rgba(255, 205, 86, 0.7)",   // 3
-        "rgba(75, 192, 192, 0.7)",   // 4
-        "rgba(54, 162, 235, 0.7)"    // 5
-      ]
+        "rgba(255, 99, 132, 0.7)",
+        "rgba(255, 159, 64, 0.7)",
+        "rgba(255, 205, 86, 0.7)",
+        "rgba(75, 192, 192, 0.7)",
+        "rgba(54, 162, 235, 0.7)",
+      ],
+      search: "",
+      trenutnaStranica: 1,
+      perPage: 10
     };
   },
+
+  computed: {
+    filtriraniTestovi() {
+      if (!this.search) return this.testovi;
+      return this.testovi.filter(t =>
+        t.naziv.toLowerCase().includes(this.search.toLowerCase())
+      );
+    },
+    totalStranica() {
+      return Math.ceil(this.filtriraniTestovi.length / this.perPage);
+    },
+    paginiraniTestovi() {
+      const start = (this.trenutnaStranica - 1) * this.perPage;
+      return this.filtriraniTestovi.slice(start, start + this.perPage);
+    }
+  },
+
+  watch: {
+    search() {
+      this.trenutnaStranica = 1; 
+    }
+  },
+
   methods: {
+    showToast(message, type = "success") {
+      this.toast.message = message;
+      this.toast.type = type;
+      this.toast.show = true;
+      setTimeout(() => (this.toast.show = false), 3000);
+    },
+
     async ucitajTestove() {
       try {
         const res = await fetch(`${this.apiUrl}/get-testovi.php`);
         const json = await res.json();
-        if (json.success) this.testovi = json.testovi;
-      } catch (e) {
-        console.error(e);
+        if (json.success) {
+          this.testovi = json.testovi;
+        }
+      } catch (err) {
+        console.error(err);
       }
     },
+
     async ucitajRezultate(testId) {
-      this.odabraniTest = testId;
       await this.loadRezultati(testId);
-      if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
-      this.rezultatiIntervalId = setInterval(() => {
-        this.loadRezultati(testId, true); 
-      }, 10000);
+
+      if (!this.rezultati.length) {
+        this.showToast("Nema rezultata za ovaj test.", "warning");
+        return;
+      }
+
+      this.odabraniTest = testId;
+      await nextTick();
+      this.napraviGrafikon();
     },
-    async loadRezultati(testId, update=false) {
+
+    async loadRezultati(testId) {
       try {
-        const res = await fetch(`${this.apiUrl}/get-rezultati.php?test_id=${testId}`);
+        const res = await fetch(
+          `${this.apiUrl}/get-rezultati.php?test_id=${testId}`
+        );
         const json = await res.json();
         if (json.success) {
           this.rezultati = json.rezultati;
-          if(update && this.chart){
-            this.updateGrafikon();
-          } else {
-            this.napraviGrafikon();
-          }
         }
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
       }
     },
+
     async spremiOcjenu(rezultatId, novaOcjena) {
       try {
         const res = await fetch(`${this.apiUrl}/update-ocjena.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rezultat_id: rezultatId, nova_ocjena: novaOcjena })
+          body: JSON.stringify({
+            rezultat_id: rezultatId,
+            nova_ocjena: novaOcjena,
+          }),
         });
         const json = await res.json();
-        alert(json.message);
-      } catch (e) {
-        console.error(e);
+
+        if (json.success) {
+          this.showToast(json.message || "Ocjena spremljena!", "success");
+          const r = this.rezultati.find((r) => r.id === rezultatId);
+          if (r) r.ocjena = novaOcjena;
+          this.updateGrafikon();
+        } else {
+          this.showToast(json.message || "Greška pri spremanju!", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        this.showToast("Greška pri spremanju!", "error");
       }
     },
+
     zatvoriRezultate() {
       this.odabraniTest = null;
-      if (this.rezultatiIntervalId) {
-        clearInterval(this.rezultatiIntervalId);
-        this.rezultatiIntervalId = null;
-      }
       if (this.chart) this.chart.destroy();
-      this.prosjekOcjena = 0;
+      this.chart = null;
       this.totalUcenika = 0;
+      this.prosjekOcjena = 0;
       this.najcescaOcjena = 0;
+      this.rezultati = [];
     },
+
     formatDatum(d) {
       return new Date(d).toLocaleString();
     },
+
     napraviGrafikon() {
       if (!this.rezultati.length) return;
 
@@ -212,45 +284,49 @@ export default {
     },
 
     updateGrafikon() {
-      if (!this.chart) return;
-      this.izracunajStatistiku();
-      this.chart.data.datasets[0].data = this.raspodjelaOcjena;
-      this.chart.update();
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
+      }
+      this.napraviGrafikon();
     },
 
     izracunajStatistiku() {
       const ocjene = this.rezultati
-        .map(r => parseFloat(r.ocjena))
-        .filter(o => !isNaN(o) && o > 0);
+        .map((r) => parseFloat(r.ocjena))
+        .filter((o) => !isNaN(o) && o > 0);
 
       if (!ocjene.length) return;
 
       this.totalUcenika = ocjene.length;
-      const prosjek = ocjene.reduce((a,b)=>a+b,0)/ocjene.length;
-      this.prosjekOcjena = prosjek.toFixed(2);
+      const avg = ocjene.reduce((a, b) => a + b, 0) / ocjene.length;
+      this.prosjekOcjena = avg.toFixed(2);
 
-
-      const rasp = {1:0,2:0,3:0,4:0,5:0};
-      ocjene.forEach(o=>{
-        const zaok = Math.round(o);
-        if(rasp[zaok]!==undefined) rasp[zaok]++;
+      const count = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      ocjene.forEach((o) => {
+        const round = Math.round(o);
+        if (count[round] != null) count[round]++;
       });
-      this.raspodjelaOcjena = Object.values(rasp);
+      this.raspodjelaOcjena = Object.values(count);
 
+      const naj = Object.entries(count).reduce(
+        (a, b) => (b[1] > a[1] ? b : a),
+        [0, 0]
+      )[0];
+      this.najcescaOcjena = naj;
+    },
 
-      const najcesca = Object.entries(rasp).reduce((a,b)=> b[1] > a[1]? b : a, [0,0])[0];
-      this.najcescaOcjena = najcesca;
+    prethodnaStranica() {
+      if (this.trenutnaStranica > 1) this.trenutnaStranica--;
+    },
+    sljedecaStranica() {
+      if (this.trenutnaStranica < this.totalStranica) this.trenutnaStranica++;
     }
   },
+
   mounted() {
     this.ucitajTestove();
-    this.testIntervalId = setInterval(this.ucitajTestove, 5000);
   },
-  beforeUnmount() {
-    if (this.testIntervalId) clearInterval(this.testIntervalId);
-    if (this.rezultatiIntervalId) clearInterval(this.rezultatiIntervalId);
-    if (this.chart) this.chart.destroy();
-  }
 };
 </script>
 
@@ -262,7 +338,33 @@ export default {
   margin: auto;
 }
 
-.summary p {
-  margin: 2px 0;
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.toast-notification.success {
+  background-color: #28a745;
+}
+
+.toast-notification.error {
+  background-color: #dc3545; 
+}
+
+.toast-notification.warning {
+  background-color: #ffc107; 
+  color: black;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 </style>

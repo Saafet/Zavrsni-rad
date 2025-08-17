@@ -1,7 +1,10 @@
 <template>
   <div class="container mt-5">
-    <h1 class="mb-4">Dostupni testovi</h1>
+    <div v-if="toast.show" :class="['toast-notification', toast.type]">
+      {{ toast.message }}
+    </div>
 
+    <h1 class="mb-4">Dostupni testovi</h1>
 
     <div v-if="!imePrezimePotvrđeno" class="mb-4">
       <input v-model="ime" placeholder="Ime" class="form-control mb-2" />
@@ -10,7 +13,6 @@
         Počni
       </button>
     </div>
-
 
     <div v-if="imePrezimePotvrđeno">
       <div class="mb-3">
@@ -38,7 +40,12 @@
           <li class="page-item" :class="{ disabled: currentPage === 1 }">
             <button class="page-link" @click="currentPage--">Prethodno</button>
           </li>
-          <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: page === currentPage }">
+          <li
+            class="page-item"
+            v-for="page in totalPages"
+            :key="page"
+            :class="{ active: page === currentPage }"
+          >
             <button class="page-link" @click="currentPage = page">{{ page }}</button>
           </li>
           <li class="page-item" :class="{ disabled: currentPage === totalPages }">
@@ -106,7 +113,6 @@
       </div>
     </div>
 
-    <!-- Poruke -->
     <div v-if="message.text" :class="'alert mt-3 alert-' + message.type">
       {{ message.text }}
     </div>
@@ -125,6 +131,12 @@ export default {
     const currentResults = ref([]);
     const answers = ref({});
     const message = ref({ text: "", type: "info" });
+
+    const toast = ref({ show: false, message: "", type: "success" });
+    const showToast = (msg, type = "success") => {
+      toast.value = { show: true, message: msg, type };
+      setTimeout(() => { toast.value.show = false }, 3000);
+    };
 
     const ime = ref("");
     const prezime = ref("");
@@ -165,11 +177,17 @@ export default {
           currentTest.value = {
             id: testId,
             naziv: data.naziv,
-            pitanja: data.pitanja.map(p => ({
-              id: p.id,
-              naziv: p.naziv,
-              tip: p.tip
-            }))
+            pitanja: data.pitanja
+              .map(p => ({
+                id: p.id,
+                naziv: p.naziv,
+                tip: p.tip ? p.tip.toString().trim().toLowerCase() : ''
+              }))
+              .sort((a, b) => {
+                if (a.tip === 'text' && b.tip !== 'text') return -1;
+                if (a.tip !== 'text' && b.tip === 'text') return 1;
+                return 0;
+              })
           };
           answers.value = {};
         } else {
@@ -220,10 +238,18 @@ export default {
       try {
         const res = await fetch(`${API}/get-rezultati.php?test_id=${testId}`);
         const data = await res.json();
-        if (data.success) currentResults.value = data.rezultati;
-        else message.value = { text: data.message || "Greška pri učitavanju rezultata", type: "danger" };
+        if (data.success) {
+          if (data.rezultati && data.rezultati.length > 0) {
+            currentResults.value = data.rezultati;
+          } else {
+            showToast("Nema rezultata za ovaj test.", "warning");
+            currentResults.value = [];
+          }
+        } else {
+          showToast(data.message || "Greška pri učitavanju rezultata", "error");
+        }
       } catch {
-        message.value = { text: "Greška pri učitavanju rezultata", type: "danger" };
+        showToast("Greška pri učitavanju rezultata", "error");
       }
     };
 
@@ -248,7 +274,8 @@ export default {
     return {
       testovi, loading, error, currentTest, currentResults, answers, message,
       ime, prezime, imePrezimePotvrđeno, search, currentPage, totalPages, paginatedTests,
-      potvrdiImePrezime, otvoriTest, closeTest, submitTest, otvoriRezultate, formatDate
+      potvrdiImePrezime, otvoriTest, closeTest, submitTest, otvoriRezultate,
+      formatDate, toast  
     };
   }
 };
@@ -269,5 +296,25 @@ export default {
   max-height: 90%;
   overflow-y: auto;
   padding: 20px;
+}
+
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+.toast-notification.success { background: #28a745; }
+.toast-notification.error   { background: #dc3545; }
+.toast-notification.warning { background: #ffc107; color: #000; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 </style>

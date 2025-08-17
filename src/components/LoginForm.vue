@@ -1,7 +1,8 @@
 <template>
   <div class="auth-container">
-    <div class="auth-form">
-      <div v-if="currentForm === 'login'" class="form-container">
+    <div class="auth-card" :class="{ flipped: currentForm === 'register' }">
+      
+      <div class="form-side front">
         <h2>Prijava</h2>
         <form @submit.prevent="handleLogin">
           <input type="text" v-model="username" placeholder="Korisničko ime" required />
@@ -11,16 +12,17 @@
         <p @click="switchForm('register')">Nemate nalog? Registrujte se</p>
       </div>
 
-      <div v-if="currentForm === 'register'" class="form-container">
+      <div class="form-side back">
         <h2>Registracija</h2>
         <form @submit.prevent="handleRegister">
           <input type="text" v-model="username" placeholder="Korisničko ime" required />
-          <input type="email" v-model="email" placeholder="E-mail" required />
+          <input type="email" v-model="email" placeholder="Email" required />
           <input type="password" v-model="password" placeholder="Šifra" required />
           <button type="submit">Registruj se</button>
         </form>
         <p @click="switchForm('login')">Već imate nalog? Prijavite se</p>
       </div>
+
     </div>
   </div>
 </template>
@@ -31,7 +33,7 @@ import axios from "axios";
 export default {
   data() {
     return {
-      currentForm: 'login', 
+      currentForm: 'login',
       username: '',
       password: '',
       email: ''
@@ -49,11 +51,10 @@ export default {
           localStorage.setItem("user", JSON.stringify(response.data));
           this.$router.push('/main');
         } else {
-          alert("Invalid username or password!");
+          alert("Neispravno korisničko ime ili šifra.");
         }
       } catch (error) {
-        console.error("Login failed:", error);
-        alert("An error occurred. Please try again.");
+        alert("Greška pri prijavi.");
       }
     },
 
@@ -66,14 +67,13 @@ export default {
         });
 
         if (response.data.status === "success") {
-          alert("Registration successful! Please log in.");
+          alert("Registracija uspešna!");
           this.switchForm('login');
         } else {
-          alert("Registration failed. Please try again.");
+          alert("Registracija nije uspela.");
         }
       } catch (error) {
-        console.error("Registration failed:", error);
-        alert("An error occurred. Please try again.");
+        alert("Greška pri registraciji.");
       }
     },
 
@@ -90,58 +90,106 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-size: cover;
+  background: linear-gradient(135deg, #53565a, #909192);
+  perspective: 1200px;
 }
 
-.auth-form {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.auth-card {
+  width: 100%;
   max-width: 400px;
-  width: 100%;
-  animation: fadeIn 0.5s ease-in-out;
+  height: 480px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s ease;
 }
 
-.auth-form input {
+.auth-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.form-side {
+  position: absolute;
   width: 100%;
-  padding: 10px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  padding: 40px 30px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.front {
+  transform: rotateY(0deg);
+}
+
+.back {
+  transform: rotateY(180deg);
+}
+
+.form-side h2 {
+  text-align: center;
+  color: #000000;
+  margin-bottom: 25px;
+}
+
+.form-side input {
+  width: 100%;
+  padding: 12px 16px;
   margin: 10px 0;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 6px;
+  font-size: 16px;
+  background: #f9f9f9;
+  transition: 0.3s ease;
 }
 
-.auth-form button {
+.form-side input:focus {
+  outline: none;
+  background: #eef6ff;
+  border-color: #515152;
+}
+
+.form-side button {
   width: 100%;
-  padding: 10px;
-  background-color: #007BFF;
+  padding: 12px;
+  background-color: #303131;
   color: white;
   border: none;
-  border-radius: 5px;
+  font-weight: bold;
+  border-radius: 6px;
   cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.2s ease-in-out, background-color 0.3s ease;
 }
 
-.auth-form button:hover {
+.form-side button:hover {
+  transform: scale(1.04);
   background-color: #0056b3;
 }
 
-.auth-form p {
-  text-align: center;
-  cursor: pointer;
-  color: #007BFF;
+.form-side p {
   margin-top: 15px;
+  text-align: center;
+  color: #007BFF;
+  cursor: pointer;
+  transition: 0.3s;
 }
-
-.auth-form p:hover {
+.form-side p:hover {
   text-decoration: underline;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@media (max-width: 420px) {
+  .auth-card {
+    width: 90%;
+    height: auto;
   }
-  to {
-    opacity: 1;
+
+  .form-side {
+    padding: 30px 20px;
   }
 }
 </style>

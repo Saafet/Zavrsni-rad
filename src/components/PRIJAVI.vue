@@ -35,6 +35,7 @@
         </div>
       </form>
     </div>
+
     <div v-if="userRole === 'professor' || userRole === 'admin'" class="mb-5 border rounded p-3 bg-light">
       <h3>Kreiraj test</h3>
       <form @submit.prevent="kreirajTest" class="row g-2">
@@ -47,7 +48,7 @@
             {{ svaPitanja.length > 0 && noviTest.odabranaPitanja.length === svaPitanja.length ? 'Odznači sva pitanja' : 'Označi sva pitanja' }}
           </button>
           <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 5px;">
-            <div v-for="pitanje in svaPitanja" :key="pitanje.id" class="form-check">
+            <div v-for="pitanje in sortiranaPitanja" :key="pitanje.id" class="form-check">
               <input class="form-check-input" type="checkbox" :value="pitanje.id" v-model="noviTest.odabranaPitanja" />
               <label class="form-check-label">
                 {{ pitanje.naziv }} ({{ isTextType(pitanje.tip) ? 'Tekst' : 'Da/Ne' }})
@@ -60,6 +61,7 @@
         </div>
       </form>
     </div>
+
     <div class="mb-5">
       <h3>Vaša kreirana pitanja</h3>
       <div class="row row-cols-1 row-cols-md-4 g-1" style="max-height: 500px; overflow-y: auto;">
@@ -79,6 +81,7 @@
         </div>
       </div>
     </div>
+
     <div v-if="urediPitanje.id" class="modal-backdrop">
       <div class="modal d-block" tabindex="-1">
         <div class="modal-dialog">
@@ -131,6 +134,13 @@ export default {
   computed: {
     prikazanaPitanja() {
       return this.svaPitanja.slice(0, 10);
+    },
+    sortiranaPitanja() {
+      return [...this.svaPitanja].sort((a, b) => {
+        if (this.isTextType(a.tip) && !this.isTextType(b.tip)) return -1;
+        if (!this.isTextType(a.tip) && this.isTextType(b.tip)) return 1;
+        return 0;
+      });
     }
   },
   methods: {

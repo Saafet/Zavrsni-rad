@@ -31,9 +31,6 @@
     </nav>
     <Login v-if="!userRole" />
 
-
-
-
     <br><br>
 
     <section class="uvodni-tekst container container-custom mt-5 pt-5 py-5 bg-light rounded shadow">
@@ -46,12 +43,12 @@
             Naša platforma omogućava jednostavno i interaktivno rješavanje testova direktno putem interneta.
             Bez obzira da li učite od kuće, iz studentskog doma ili biblioteke — sve što vam je potrebno je uređaj s internetom i vaš studentski nalog.
           </p>
-          <a href="#prijavi" class="btn btn-primary btn-lg mt-3">🚀 Započni sada</a>
+          <a href="#testrjesavanje" class="btn btn-primary btn-lg mt-3">✏️ Riješi test</a>
         </div>
 
         <div class="col-md-6 text-center">
-          <img src="/fotografije/tehnologije.png" alt="Tehnologije" class="img-fluid rounded shadow-sm"
-            style="max-height: 320px;" />
+          <img src="/fotografije/sum.png" alt="Tehnologije"
+            style="max-height: 220px;" />
         </div>
 
       </div>
@@ -68,7 +65,7 @@
 </section>
 
 
-    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+    <section id="testrjesavanje" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
   <TestRjesavanje :userRole="userRole" />
 </section>
 
