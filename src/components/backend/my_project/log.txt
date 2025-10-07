@@ -1,0 +1,2 @@
+ucenik_id: 1, rok_id: 5
+ucenik_id: 1, rok_id: 5
