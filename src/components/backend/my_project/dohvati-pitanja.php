@@ -7,7 +7,6 @@ try {
     $pdo = new PDO("mysql:host=localhost;dbname=project_db;charset=utf8", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Vraćamo sve potrebne kolone
     $stmt = $pdo->query("SELECT id, naziv, tip, odgovor AS tocan_odgovor FROM pitanja ORDER BY naziv ASC");
     $pitanja = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

@@ -3,7 +3,7 @@
     
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">Diplomski</a>
+        <a class="navbar-brand" href="#">Zavrsni rad</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,8 +15,17 @@
             
             <ul class="navbar-nav mx-auto">
 
-              <li class="nav-item" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+              <li class="nav-item" v-if="userRole === 'professor' || userRole === 'admin'">
                 <a class="nav-link" href="#prijavi">KREIRANA PITANJA</a>
+              </li>
+              <li class="nav-item" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+                <a class="nav-link" href="#rokoviprijave">ROKOVI</a>
+              </li>
+              <li class="nav-item" v-if="userRole === 'student' || userRole === 'admin'">
+                <a class="nav-link" href="#testrjesavanje">TEST</a>
+              </li>
+              <li class="nav-item" v-if="userRole === 'professor' || userRole === 'admin'">
+                <a class="nav-link" href="#pregledrezultata">REZULTATI</a>
               </li>
               <li class="nav-item"><a class="nav-link" href="#kontakt">KONTAKT</a></li>
             </ul>
@@ -56,21 +65,21 @@
 
 
     
-    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+    <section id="prijavi" class="container mt-5" v-if="userRole === 'professor' || userRole === 'admin'">
   <PRIJAVI :userRole="userRole" />
 </section>
 
-    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+    <section id="rokoviprijave" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
   <RokoviPrijave :userRole="userRole" />
 </section>
 
 
-    <section id="testrjesavanje" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+    <section id="testrjesavanje" class="container mt-5" v-if="userRole === 'student' ||  userRole === 'admin'">
   <TestRjesavanje :userRole="userRole" />
 </section>
 
 
-    <section id="prijavi" class="container mt-5" v-if="userRole === 'student' || userRole === 'professor' || userRole === 'admin'">
+    <section id="pregledrezultata" class="container mt-5" v-if="userRole === 'professor' || userRole === 'admin'">
   <PregledRezultata :userRole="userRole" />
 </section>
 

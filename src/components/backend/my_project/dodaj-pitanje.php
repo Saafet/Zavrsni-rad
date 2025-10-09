@@ -30,7 +30,6 @@ try {
     $pdo = new PDO("mysql:host=localhost;dbname=project_db;charset=utf8", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Provjera da li već postoji pitanje
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM pitanja WHERE naziv = ?");
     $stmt->execute([$naziv]);
     if ($stmt->fetchColumn() > 0) {
@@ -38,7 +37,6 @@ try {
         exit;
     }
 
-    // Unos novog pitanja
     $stmt = $pdo->prepare("INSERT INTO pitanja (naziv, tip, odgovor) VALUES (?, ?, ?)");
     $stmt->execute([$naziv, $tip, $odgovor]);
 

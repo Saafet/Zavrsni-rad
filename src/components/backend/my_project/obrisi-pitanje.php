@@ -19,7 +19,6 @@ $pdo = new PDO("mysql:host=localhost;dbname=project_db;charset=utf8", "root", ""
 try {
 
 
-    // Obriši pitanje iz baze
     $stmt = $pdo->prepare("DELETE FROM pitanja WHERE id = ?");
     $stmt->execute([$id]);
 

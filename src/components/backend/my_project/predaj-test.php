@@ -21,7 +21,6 @@ try {
         throw new Exception("Nedostaju podaci (ime, prezime, test_id ili odgovori).");
     }
 
-    // Nađi/kreiraj učenika
     $puno_ime = $ime . ' ' . $prezime;
     $stmt = $pdo->prepare("SELECT id FROM korisnici WHERE ime = ?");
     $stmt->execute([$puno_ime]);
@@ -36,7 +35,6 @@ try {
     $tocno = 0;
     $ukupno = count($odgovori);
 
-    // Mapiraj pitanja iz baze: id => [tip, odgovor]
     $ids = array_map(function ($o) { return (int)$o['pitanje_id']; }, $odgovori);
     if (empty($ids)) throw new Exception("Nema pitanja u predaji.");
     $in = implode(',', array_fill(0, count($ids), '?'));
@@ -53,36 +51,29 @@ try {
         $odgovorKorisnika = isset($o['odgovor']) ? $o['odgovor'] : null;
 
         if (!isset($map[$pitanje_id])) {
-            // pitanje ne postoji -> preskoči
             continue;
         }
 
-        $tip = $map[$pitanje_id]['tip'];          // 'text' ili 'truefalse'
-        $tacan = $map[$pitanje_id]['odgovor'];    // string ili '0'/'1'
+        $tip = $map[$pitanje_id]['tip'];  
+        $tacan = $map[$pitanje_id]['odgovor'];  
 
         $is_correct = 0;
         if ($tip === 'truefalse') {
-            // poredi kao integer
             $is_correct = ((int)$odgovorKorisnika === (int)$tacan) ? 1 : 0;
         } else {
-            // 'text' – case-insensitive, trim
             $is_correct = (mb_strtolower(trim((string)$odgovorKorisnika)) === mb_strtolower(trim((string)$tacan))) ? 1 : 0;
         }
 
         if ($is_correct) $tocno++;
-        // Ako želiš spremati pojedinačne odgovore, možeš dodati tablicu i INSERT ovdje.
     }
 
     $procenat = $ukupno > 0 ? round(($tocno / $ukupno) * 100, 2) : 0.00;
 
-    // Skala ocjena – prilagodi po želji
     if ($procenat >= 90) $ocjena = 5.0;
     elseif ($procenat >= 70) $ocjena = 4.0;
     elseif ($procenat >= 50) $ocjena = 3.0;
     elseif ($procenat >= 30) $ocjena = 2.0;
     else $ocjena = 1.0;
-
-    // Upis rezultata
     $insr = $pdo->prepare("
         INSERT INTO rezultati_testova
             (test_id, ime, prezime, ucenik_id, tocno, ukupno, procenat, ocjena, ime_ucenika, prezime_ucenika)

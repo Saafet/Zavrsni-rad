@@ -5,7 +5,6 @@ header("Content-Type: application/json; charset=UTF-8");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Validacija
 if (!isset($data['id']) || !is_numeric($data['id'])) {
     echo json_encode(["success" => false, "message" => "ID pitanja je obavezan."]);
     exit;
@@ -37,15 +36,12 @@ try {
     $pdo = new PDO("mysql:host=localhost;dbname=project_db;charset=utf8", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Provjera duplikata
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM pitanja WHERE naziv = ? AND id != ?");
     $stmt->execute([$naziv, $id]);
     if ($stmt->fetchColumn() > 0) {
         echo json_encode(["success" => false, "message" => "Pitanje s tim nazivom već postoji."]);
         exit;
     }
-
-    // Ažuriranje
     $stmt = $pdo->prepare("UPDATE pitanja SET naziv = ?, tip = ?, odgovor = ? WHERE id = ?");
     $stmt->execute([$naziv, $tip, $odgovor, $id]);
 

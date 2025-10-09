@@ -3,7 +3,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Provjera parametra
+
 if (!isset($_GET['test_id'])) {
     echo json_encode(["success" => false, "message" => "Nedostaje test_id"]);
     exit;
@@ -15,7 +15,7 @@ try {
     $pdo = new PDO("mysql:host=localhost;dbname=project_db;charset=utf8mb4", "root", "");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Dohvati naziv testa
+
     $stmt = $pdo->prepare("SELECT naziv FROM testovi WHERE id = ?");
     $stmt->execute([$test_id]);
     $test = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -25,7 +25,6 @@ try {
         exit;
     }
 
-    // Dohvati samo pitanja povezana sa ovim testom preko junction table
     $sql = "SELECT p.id, p.naziv, p.tip
             FROM pitanja p
             JOIN test_pitanja tp ON p.id = tp.pitanje_id
